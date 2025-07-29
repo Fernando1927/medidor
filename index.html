@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glucometro Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f7ff;
+            color: #333;
+        }
+        
+        .glucometer-body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f7ff 100%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .blood-drop {
+            animation: pulse 2s infinite;
+            filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6));
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .result-box {
+            transition: all 0.5s ease;
+        }
+        
+        .speaker-animation {
+            animation: speak 1.5s infinite;
+        }
+        
+        @keyframes speak {
+            0% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.8; transform: scale(1); }
+        }
+        
+        .bmi-indicator {
+            background: linear-gradient(to right, #22c55e, #f97316, #ef4444);
+        }
+        
+        .bmi-marker {
+            transition: left 0.5s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="glucometer-body w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-blue-800">Glucometro IA</h1>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-center mb-8">
+            <div class="relative">
+                <svg class="blood-drop w-24 h-24 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 1L3 13h3v8h12v-8h3L12 1zm0 6.46L15.5 12H13v6h-2v-6H8.5L12 7.46z"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                        <span class="text-xl font-bold text-red-600">AI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Nivel de glucosa (mg/dL)</label>
+                <input type="number" id="glucose-level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: 120">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Edad</label>
+                    <input type="number" id="age" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Años">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Peso (kg)</label>
+                    <input type="number" id="weight" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: 70">
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Estatura (cm)</label>
+                <input type="number" id="height" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ej: 175">
+            </div>
+            
+            <button id="analyze-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+                </svg>
+                <span>Analizar Muestra</span>
+            </button>
+        </div>
+        
+        <div id="result-container" class="hidden mt-8 result-box">
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-blue-800">Resultado</h2>
+                    <div id="speaker-icon" class="speaker-animation bg-blue-100 rounded-full p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <div id="diagnostic-result" class="mb-4">
+                    <p id="glucose-value" class="text-3xl font-bold mb-2"></p>
+                    <p id="glucose-status" class="text-lg"></p>
+                    <p id="diagnostic-message" class="text-gray-600 mt-2"></p>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-700 mb-1">Índice metabólico</p>
+                    <div class="bmi-indicator h-2 rounded-full w-full relative mb-2">
+                        <div id="bmi-marker" class="bmi-marker absolute w-3 h-3 bg-gray-900 rounded-full -top-0.5 transform -translate-x-1/2"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>Bajo</span>
+                        <span>Normal</span>
+                        <span>Alto</span>
+                    </div>
+                </div>
+                
+                <div id="recommendations" class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-medium text-blue-800 mb-2">Recomendaciones:</h3>
+                    <ul id="recommendation-list" class="list-disc list-inside text-sm text-blue-900 space-y-1">
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center text-xs text-gray-400">
+            <p>Este dispositivo no sustituye el diagnóstico médico profesional</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const resultContainer = document.getElementById('result-container');
+            const glucoseLevelInput = document.getElementById('glucose-level');
+            const ageInput = document.getElementById('age');
+            const weightInput = document.getElementById('weight');
+            const heightInput = document.getElementById('height');
+            const glucoseValueElement = document.getElementById('glucose-value');
+            const glucoseStatusElement = document.getElementById('glucose-status');
+            const diagnosticMessageElement = document.getElementById('diagnostic-message');
+            const recommendationList = document.getElementById('recommendation-list');
+            const bmiMarker = document.getElementById('bmi-marker');
+            const speakerIcon = document.getElementById('speaker-icon');
+            
+            // Sintetizar voz
+            function speak(text) {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance();
+                    utterance.text = text;
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 0.9;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+            
+            // Calcular índice metabólico personalizado
+            function calculateMetabolicIndex(age, weight, height, glucose) {
+                // Factor edad: mayor edad lleva a mayor vulnerabilidad
+                const ageFactor = Math.min(1, age / 80);
+                
+                // Factor BMI
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                const bmiFactor = Math.max(0, Math.min(1, (bmi - 18.5) / (30 - 18.5)));
+                
+                // Factor glucosa (normalizado 70-180)
+                const glucoseFactor = Math.min(1, Math.max(0, (glucose - 70) / (180 - 70)));
+                
+                // Combinación ponderada de factores
+                return (ageFactor * 0.3 + bmiFactor * 0.4 + glucoseFactor * 0.3) * 100;
+            }
+            
+            // Determinar clasificación de glucosa
+            function getGlucoseClassification(glucose, age) {
+                // Rangos ajustados por edad (mayores tienen márgenes más amplios)
+                const ageAdjustment = Math.min(30, Math.max(0, age - 40)) / 10;
+                
+                if (glucose < 70) return {status: 'Hipoglucemia', color: 'text-blue-600', message: 'Nivel peligrosamente bajo. Consuma carbohidratos de acción rápida y consulte a su médico.'};
+                if (glucose < 80 + ageAdjustment) return {status: 'Bajo lo normal', color: 'text-blue-500', message: 'Nivel ligeramente bajo. Considere un pequeño refrigerio si tiene síntomas.'};
+                if (glucose < 100 + ageAdjustment) return {status: 'Normal', color: 'text-green-600', message: 'Excelente! Sus niveles están en el rango saludable.'};
+                if (glucose < 126 + ageAdjustment) return {status: 'Elevado', color: 'text-yellow-600', message: 'Nivel superior al normal. Considere actividad física y revise su alimentación.'};
+                if (glucose < 180 + ageAdjustment) return {status: 'Alto', color: 'text-orange-600', message: 'Nivel alto. Si es persistente, consulte a su médico.'};
+                return {status: 'Muy alto', color: 'text-red-600', message: 'Nivel peligrosamente alto. Busque atención médica inmediata.'};
+            }
+            
+            // Generar recomendaciones personalizadas
+            function generateRecommendations(classification, age, weight, height) {
+                const recommendations = [];
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                
+                // Recomendaciones basadas en nivel de glucosa
+                if (classification.status.includes('Hipoglucemia')) {
+                    recommendations.push('Ingerir 15-20g de carbohidratos simples (zumo de fruta, caramelos)');
+                    recommendations.push('Repetir medición en 15 minutos');
+                }
+                
+                if (classification.status.includes('Elevado') || classification.status.includes('Alto')) {
+                    recommendations.push('Realizar 30 minutos de actividad física moderada');
+                    recommendations.push('Consumir alimentos bajos en índice glucémico');
+                    recommendations.push('Beber suficiente agua');
+                }
+                
+                // Recomendaciones basadas en BMI
+                if (bmi > 25) {
+                    recommendations.push('Reducir porciones de alimentos procesados');
+                    recommendations.push('Aumentar consumo de fibra y proteína magra');
+                }
+                
+                // Recomendaciones basadas en edad
+                if (age > 50) {
+                    recommendations.push('Monitorear presión arterial con regularidad');
+                    recommendations.push('Realizar chequeos médicos anuales');
+                }
+                
+                if (recommendations.length === 0) {
+                    recommendations.push('Mantenga sus buenos hábitos actuales');
+                    recommendations.push('Controle sus niveles regularmente');
+                }
+                
+                return recommendations;
+            }
+            
+            // Manejar análisis de muestra
+            analyzeBtn.addEventListener('click', function() {
+                const glucose = parseFloat(glucoseLevelInput.value);
+                const age = parseInt(ageInput.value);
+                const weight = parseFloat(weightInput.value);
+                const height = parseFloat(heightInput.value);
+                
+                // Validar entradas
+                if (isNaN(glucose) || isNaN(age) || isNaN(weight) || isNaN(height)) {
+                    alert('Por favor complete todos los campos con valores válidos');
+                    return;
+                }
+                
+                // Calcular resultados
+                const classification = getGlucoseClassification(glucose, age);
+                const metabolicIndex = calculateMetabolicIndex(age, weight, height, glucose);
+                const recommendations = generateRecommendations(classification, age, weight, height);
+                
+                // Mostrar resultados
+                glucoseValueElement.textContent = `${glucose} mg/dL`;
+                glucoseValueElement.className = `text-3xl font-bold mb-2 ${classification.color}`;
+                glucoseStatusElement.textContent = classification.status;
+                glucoseStatusElement.className = `text-lg ${classification.color}`;
+                diagnosticMessageElement.textContent = classification.message;
+                
+                // Posicionar marcador metabólico
+                const markerPosition = Math.min(100, Math.max(0, metabolicIndex));
+                bmiMarker.style.left = `${markerPosition}%`;
+                
+                // Generar lista de recomendaciones
+                recommendationList.innerHTML = '';
+                recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recommendationList.appendChild(li);
+                });
+                
+                // Mostrar resultados y hablar
+                resultContainer.classList.remove('hidden');
+                
+                // Mensaje de voz
+                const voiceMessage = `Nivel de glucosa: ${glucose} miligramos por decilitro. ${classification.status}. ${classification.message}`;
+                speak(voiceMessage);
+            });
+            
+            // Permitir repetir el mensaje al hacer clic en el icono
+            speakerIcon.addEventListener('click', function() {
+                if (diagnosticMessageElement.textContent) {
+                    const message = `Nivel: ${glucoseValueElement.textContent}. ${glucoseStatusElement.textContent}. ${diagnosticMessageElement.textContent}`;
+                    speak(message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
